@@ -1,12 +1,11 @@
 #ifndef GAMETABLEWIDGET_H
 #define GAMETABLEWIDGET_H
-
-
 #include "../../GUIpart/StartDeck/StartDeckWidget.h"
 #include "../../GUIpart/BattleArea/BattleAreaWidget.h"
 #include "../../GUIpart/ThisPlayerDeck/ThisPlayerDeckWidget.h"
 #include "../../GUIpart/OtherPlayerDeck/OtherPlayerDeckWidget.h"
 #include "../../GUIpart/HandUp/HandUpWidget.h"
+
 
 class GameTableWidget : public QWidget
 {
