@@ -1,4 +1,4 @@
-# FoolGameDesktopClientdwf
+# FoolGameDesktopClientd
 ПК-клиент игры для Windows 10 (возможно, запустится на восьмёрке).
 Разделён на две части:
   GUI и ApplicationEthernetController (не очень удачное название, потом поправлю). 
