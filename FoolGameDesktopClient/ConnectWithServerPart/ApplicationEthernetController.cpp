@@ -1,29 +1,16 @@
 #include "ApplicationEthernetController.h"
 
-ApplicationEthernetController::ApplicationEthernetController(QWidget* parent)
-    :QWidget{ parent },
+ApplicationEthernetController::ApplicationEthernetController(QObject* parent)
+    :QObject{ parent },
      m_tcpSocket{ new QTcpSocket(this) },
-     m_textEdit{ new QTextEdit(this) },
-     m_nextDataBlockSize{ 0 },
-     m_startGame{ new QPushButton("Start game", this) }
+     m_nextDataBlockSize{ 0 }
     {
-        m_textEdit->setReadOnly(true);
         //"locathos" - имя хоста (равносильно ip). Будет считываться из файла
         //2323 - номер сокета. Будет считываться из файла
         m_tcpSocket->connectToHost("localhost", 2323);
         QObject::connect(m_tcpSocket, &QTcpSocket::readyRead, this, &ApplicationEthernetController::serverSlotReadyRead);
         QObject::connect(m_tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(serverSlotError(QAbstractSocket::SocketError)));
         QObject::connect(m_tcpSocket, &QTcpSocket::readyRead, this, &ApplicationEthernetController::serverSlotReadyRead);
-
-        QObject::connect(m_startGame, &QPushButton::clicked, this, &ApplicationEthernetController::instanceSlotPlayerWantPlay);
-
-        QVBoxLayout* layout = new QVBoxLayout;
-        layout->addWidget(new QLabel("<center><b><i>Client controller</i></b></center>"));
-        layout->addWidget(m_textEdit);
-        layout->addWidget(m_startGame);
-        this->setLayout(layout);
-
-
     }
 
 void ApplicationEthernetController::instanceSlotActionButtonWasClicked()
@@ -35,9 +22,8 @@ void ApplicationEthernetController::instanceSlotActionButtonWasClicked()
     outStream.device()->seek(0);
     outStream << qint16(dataBlock.size() - sizeof(qint16));
     m_tcpSocket->write(dataBlock);
-    m_textEdit->append("Action button was clicked");
 }
-void ApplicationEthernetController::instanceSlotPlayerTryBeat(Card* card, BattlePairWidget* pair)
+void ApplicationEthernetController::instanceSlotPlayerTryBeat(Card* card, qint16 pairID)
 {
     QByteArray dataBlock;
     QDataStream outStream(&dataBlock, QIODevice::OpenModeFlag::WriteOnly);
@@ -46,12 +32,12 @@ void ApplicationEthernetController::instanceSlotPlayerTryBeat(Card* card, Battle
               << SignalFromApplicationOnServer::TryBeat
               << card->suit()
               << card->dignity()
-              << pair->id();
+              << pairID;
     outStream.device()->seek(0);
     outStream << qint16(dataBlock.size() - sizeof(qint16));
     m_tcpSocket->write(dataBlock);
-    m_textEdit->append(QString("Player successfully beat card [%1:%2] with pair [%3]").arg(card->suit()).arg(card->dignity()).arg(pair->id()));
 }
+
 void ApplicationEthernetController::instanceSlotPlayerTryToss(Card* card)
 {
     QByteArray dataBlock;
@@ -64,8 +50,8 @@ void ApplicationEthernetController::instanceSlotPlayerTryToss(Card* card)
     outStream.device()->seek(0);
     outStream << qint16(dataBlock.size() - sizeof(qint16));
     m_tcpSocket->write(dataBlock);
-    m_textEdit->append(QString("Player successfully toss card [%1:%2]").arg(card->suit()).arg(card->dignity()));
 }
+
 void ApplicationEthernetController::instanceSlotPlayerWantPlay()
 {
     QByteArray dataBlock;
@@ -75,7 +61,6 @@ void ApplicationEthernetController::instanceSlotPlayerWantPlay()
     outStream.device()->seek(0);
     outStream << qint16(dataBlock.size() - sizeof(qint16));
     m_tcpSocket->write(dataBlock);
-    m_textEdit->append("Request to make play");
 }
 
 
@@ -83,15 +68,15 @@ void ApplicationEthernetController::serverSlotError(QAbstractSocket::SocketError
 {
     switch(err)
     {
-        case QAbstractSocket::SocketError::HostNotFoundError      : { m_textEdit->append("Invalid ip address"); break; }
-        case QAbstractSocket::SocketError::RemoteHostClosedError  : { m_textEdit->append("Server was closed"); break; }
-        case QAbstractSocket::SocketError::ConnectionRefusedError : { m_textEdit->append("Unable to connect to server"); break; }
-        default: { m_textEdit->append("Undefined error"); break; }
+        case QAbstractSocket::SocketError::HostNotFoundError      : { qDebug() << ("Invalid ip address"); break; }
+        case QAbstractSocket::SocketError::RemoteHostClosedError  : { qDebug() << ("Server was closed"); break; }
+        case QAbstractSocket::SocketError::ConnectionRefusedError : { qDebug() << ("Unable to connect to server"); break; }
+        default: { qDebug() << ("Undefined error"); break; }
     }
 }
 void ApplicationEthernetController::serverSlotConnected()
 {
-    m_textEdit->append("Succesfully connecting with server");
+    qDebug() << ("Succesfully connecting with server");
 }
 void ApplicationEthernetController::serverSlotReadyRead()
 {
@@ -119,7 +104,7 @@ void ApplicationEthernetController::serverSlotReadyRead()
         {
             case SignalFromServerToApplication::PlayerTakeAllCards                :
             {
-                this->m_textEdit->append("PlayerTakeAllCards");
+                qDebug() << ("PlayerTakeAllCards");
                 qint16 playerID;
                 dataBlock >> playerID;
                 emit this->signalPlayerTakeAllCards(playerID);
@@ -127,7 +112,7 @@ void ApplicationEthernetController::serverSlotReadyRead()
             }
             case SignalFromServerToApplication::PlayerTossedCard            :
             {
-                this->m_textEdit->append("PlayerTossedCard");
+                qDebug() << ("PlayerTossedCard");
                 qint16 playerID;
                 Card::Suit suit;
                 Card::Dignity dignity;
@@ -137,93 +122,89 @@ void ApplicationEthernetController::serverSlotReadyRead()
             }
             case SignalFromServerToApplication::PlayerBeatCard              :
             {
-                this->m_textEdit->append("PlayerBeatCard");
+                qDebug() << ("PlayerBeatCard");
                 qint16 playerID;
                 qint16 battlePairID;
                 Card::Suit suit;
                 Card::Dignity dignity;
                 dataBlock >> playerID >> battlePairID >> suit >> dignity;
+                qDebug() << QString("Player[%1] beat. Card[%2:%3]. Pair[%4]").arg(playerID).arg(suit).arg(dignity).arg(battlePairID);
                 emit this->signalPlayerBeatCard(playerID, battlePairID, suit, dignity);
                 break;
             }
-            case SignalFromServerToApplication::TakeCardFromDeck                   :
+            case ThisPlayerTakeCardFromDeck                                 :
             {
-                this->m_textEdit->append("TakeCardFromDeck");
-                qint16 playerID;
-                Card::Suit suit;
-                Card::Dignity dignity;
-                dataBlock >> playerID >> suit >> dignity;
-                emit this->signalTakeCardFromDeck(playerID, suit, dignity);
+                 qDebug() << ("ThisPlayerTakeCardFromDeck");
+                 Card::Suit s;
+                 Card::Dignity d;
+                 dataBlock >> s >> d;
+                 emit signalThisPlayerTakeCardFromDeck(s, d);
+                 break;
+            }
+            case OtherPlayerTakeCardFromDeck:
+            {
+                qDebug() << ("OtherPlayerTakeCardFromDeck");
+                qint16 id;
+                dataBlock >> id;
+
+                emit signalOtherPlayerTakeCardFromDeck(id);
                 break;
             }
             case SetNewMainPlayersPair:
             {
-                this->m_textEdit->append("SetNewMainPlayersPair");
-                qint16 attaclerGlobalID;
+                qDebug() << ("SetNewMainPlayersPair");
+                qint16 attackerGlobalID;
                 qint16 defenderGlobalID;
-                dataBlock >> attaclerGlobalID >> defenderGlobalID;
-                emit this->signalSetNewMainPair(attaclerGlobalID, defenderGlobalID);
+                dataBlock >> attackerGlobalID >> defenderGlobalID;
+                emit this->signalSetNewMainPair(attackerGlobalID, defenderGlobalID);
                 break;
             }
-            case SignalFromServerToApplication::MakeTurn                           :
+            case SignalFromServerToApplication::MakeTurn                    :
             {
-                this->m_textEdit->append("MakeTurn");
+                qDebug() << ("MakeTurn");
                 emit this->signalMakeTurn();
                 break;
             }
-
-            case SignalFromServerToApplication::SetPlayerID                        :
+            case YourActionIsUnsuccesfully:
             {
-                this->m_textEdit->append("SetPlayerID");
-                dataBlock >> this->m_ID;
-                //*******************************************************************************************************
-                //TEST
-                m_tableWidget = new GameTableWidget(this->m_ID, {this->m_ID, 2, 3}, this->m_ID, 2, nullptr);
-                QObject::connect(this, &ApplicationEthernetController::signalPlayerTakeAllCards, m_tableWidget, &GameTableWidget::serverSlotPlayerTakeAllCards);
-                QObject::connect(this, &ApplicationEthernetController::signalMakeTurn, m_tableWidget, &GameTableWidget::serverSlotMakeTurn);
-                QObject::connect(this, &ApplicationEthernetController::signalSetNewMainPair, m_tableWidget, &GameTableWidget::serverSlotSetNewMainPair);
-                QObject::connect(this, &ApplicationEthernetController::signalPlayerTossedCard, m_tableWidget, &GameTableWidget::serverSlotPlayerTossedCard);
-                QObject::connect(this, &ApplicationEthernetController::signalPlayerBeatCard, m_tableWidget, &GameTableWidget::serverSlotPlayerBeatCard);
-                QObject::connect(this, &ApplicationEthernetController::signalTakeCardFromDeck, m_tableWidget, &GameTableWidget::serverSlotPlayerTakeCardFromDeck);
-
-                QObject::connect(m_tableWidget, &GameTableWidget::tryBeat, this, &ApplicationEthernetController::instanceSlotPlayerTryBeat);
-                QObject::connect(m_tableWidget, &GameTableWidget::tryToss, this, &ApplicationEthernetController::instanceSlotPlayerTryToss);
-                QObject::connect(m_tableWidget, &GameTableWidget::actionButtonWasClicked, this, &ApplicationEthernetController::instanceSlotActionButtonWasClicked);
-
-                m_tableWidget->show();
-                //*******************************************************************************************************
+                qDebug() << ("Action unsuccesfull");
+                emit this->signalYourActionIsUnsuccesfully();
                 break;
             }
-            case SignalFromServerToApplication::GetAllPlayInstanceOptions          :
+
+
+            case SignalFromServerToApplication::SetPlayerID                 :
             {
-                this->m_textEdit->append("GetAllPlayInstanceOptions");
-                qint16 amountOfOtherPlayers;
-                dataBlock >> amountOfOtherPlayers;
+                qDebug() << ("SetPlayerID");
+                dataBlock >> this->m_ID;
+
+                break;
+            }
+            case SignalFromServerToApplication::GetAllPlayInstanceOptions   :
+            {
+
+                qDebug() << "GetAllPlayInstanceOptions";
+                Card::Suit trumpS;
+                Card::Dignity trumpD;
+                dataBlock >> trumpS >> trumpD;
+                qint16 amountOfPlayers;
+                dataBlock >> amountOfPlayers;
+                qDebug() << "Amount of players: " << amountOfPlayers << "\nPlayers ID:";
                 QList<qint16> allPlayersID;
-                for(int i = 0; i < amountOfOtherPlayers; ++i)
+                for(int i = 0; i < amountOfPlayers; ++i)
                 {
                     qint16 playerID;
                     dataBlock >> playerID;
                     allPlayersID.push_back(playerID);
+                    qDebug() << "\t" << playerID;
                 }
 
 
                 qint16 attacker;
                 qint16 defender;
                 dataBlock >> attacker >> defender;
-
-                m_tableWidget = new GameTableWidget(this->m_ID, allPlayersID, attacker, defender, nullptr);
-                QObject::connect(this, &ApplicationEthernetController::signalPlayerTakeAllCards, m_tableWidget, &GameTableWidget::serverSlotPlayerTakeAllCards);
-                QObject::connect(this, &ApplicationEthernetController::signalMakeTurn, m_tableWidget, &GameTableWidget::serverSlotMakeTurn);
-                QObject::connect(this, &ApplicationEthernetController::signalSetNewMainPair, m_tableWidget, &GameTableWidget::serverSlotSetNewMainPair);
-                QObject::connect(this, &ApplicationEthernetController::signalPlayerTossedCard, m_tableWidget, &GameTableWidget::serverSlotPlayerTossedCard);
-                QObject::connect(this, &ApplicationEthernetController::signalPlayerBeatCard, m_tableWidget, &GameTableWidget::serverSlotPlayerBeatCard);
-                QObject::connect(this, &ApplicationEthernetController::signalTakeCardFromDeck, m_tableWidget, &GameTableWidget::serverSlotPlayerTakeCardFromDeck);
-
-                QObject::connect(m_tableWidget, &GameTableWidget::tryBeat, this, &ApplicationEthernetController::instanceSlotPlayerTryBeat);
-                QObject::connect(m_tableWidget, &GameTableWidget::tryToss, this, &ApplicationEthernetController::instanceSlotPlayerTryToss);
-                QObject::connect(m_tableWidget, &GameTableWidget::actionButtonWasClicked, this, &ApplicationEthernetController::instanceSlotActionButtonWasClicked);
-
+                qDebug() << "Main pair: " << attacker << "\t" << defender;
+                emit signalCreateGameInstance(trumpS, trumpD, this->m_ID, allPlayersID, attacker, defender);
                 break;
             }
         }

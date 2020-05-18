@@ -1,14 +1,18 @@
 #ifndef APPLICATIONETHERNETCONTROLLER_H
 #define APPLICATIONETHERNETCONTROLLER_H
-
-#include <QtWidgets>
-#include "../GUIpart/GameTable/GameTableWidget.h"
+#include "../InstanceGUIpart/GameTable/GameTableWidget.h"
 #include <QtNetwork/QTcpSocket>
 
-class ApplicationEthernetController: public QWidget
+class ApplicationEthernetController: public QObject
 {
     Q_OBJECT
 public:
+    //Надо ещё создать перечисления для
+    //платёжной системы (снять/пополнтиь)
+    //и смены настроек. Также можно отправлять
+    //опции вместе с SignalFromApplicationOnServer::PlayerWantPlay
+    //Для этого требуется расширить соответствующие функции
+    //в приложении и на сервере
     enum SignalFromApplicationOnServer
     {
 
@@ -24,25 +28,24 @@ public:
         PlayerTakeAllCards = 0,
         PlayerTossedCard = 1,
         PlayerBeatCard = 2,
-        TakeCardFromDeck = 3,
-        SetNewMainPlayersPair = 4,
-        MakeTurn = 5,
+        ThisPlayerTakeCardFromDeck = 3,
+        OtherPlayerTakeCardFromDeck = 4,
+        SetNewMainPlayersPair = 5,
+        MakeTurn = 6,
+        YourActionIsUnsuccesfully = 7,
 
-
-        SetPlayerID = 6,
-        GetAllPlayInstanceOptions = 7
+        SetPlayerID = 8,
+        GetAllPlayInstanceOptions = 9
     };
 
 private:
     QTcpSocket* m_tcpSocket;
-    QTextEdit* m_textEdit;
     qint16 m_nextDataBlockSize;
     GameTableWidget* m_tableWidget;
     qint16 m_ID;
 
-    QPushButton* m_startGame;
 public:
-    explicit ApplicationEthernetController(QWidget* parent = nullptr);
+    explicit ApplicationEthernetController(QObject* parent = nullptr);
 
 public slots:
     //================================================================
@@ -54,9 +57,10 @@ public slots:
     //Эти слоты получают события от инстанса(стола)
     //и передают их слотам выше
     void instanceSlotActionButtonWasClicked();
-    void instanceSlotPlayerTryBeat(Card*, BattlePairWidget*);
+    void instanceSlotPlayerTryBeat(Card*, qint16);
     void instanceSlotPlayerTryToss(Card*);
     void instanceSlotPlayerWantPlay();
+
 signals:
     //Эти сигналы вызываются для стола.
     //Решение, какой из них будет вызван,
@@ -64,9 +68,13 @@ signals:
     void signalPlayerTakeAllCards(qint16);
     void signalPlayerTossedCard(qint16, Card::Suit, Card::Dignity);
     void signalPlayerBeatCard(qint16, qint16, Card::Suit, Card::Dignity);
-    void signalTakeCardFromDeck(qint16, Card::Suit, Card::Dignity);
+    void signalThisPlayerTakeCardFromDeck(Card::Suit, Card::Dignity);
+    void signalOtherPlayerTakeCardFromDeck(qint16);
     void signalSetNewMainPair(qint16, qint16);
     void signalMakeTurn();
+    void signalYourActionIsUnsuccesfully();
+
+    void signalCreateGameInstance(Card::Suit, Card::Dignity, qint16, QList<qint16>, qint16, qint16);
 };
 
 #endif // APPLICATIONETHERNETCONTROLLER_H

@@ -16,32 +16,44 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    Card/Card.cpp \
+    ApplicationGUIPart/MainApplicationWindow/ApplicationWindow.cpp \
+    ApplicationGUIPart/MainApplicationWindow/DefaultWindow/DefaultWindow.cpp \
+    ApplicationGUIPart/MainApplicationWindow/OptionsWindow/OptionsWindow.cpp \
+    ApplicationGUIPart/MainApplicationWindow/PaymentWindow/PaymentWindow.cpp \
+    ApplicationGUIPart/MainApplicationWindow/RegistrationWindow/RegistrationWindow.cpp \
     ConnectWithServerPart/ApplicationEthernetController.cpp \
-    GUIpart/BattleArea/BattleAreaWidget.cpp \
-    GUIpart/BattlePair/BattlePairWidget.cpp \
-    GUIpart/GameTable/GameTableWidget.cpp \
-    GUIpart/HandUp/HandUpWidget.cpp \
-    GUIpart/OtherPlayerDeck/OtherPlayerDeckWidget.cpp \
-    GUIpart/SharedParentForPlayersDeck/SharedParentForPlayersDeck.cpp \
-    GUIpart/StartDeck/StartDeckWidget.cpp \
-    GUIpart/ThisPlayerDeck/ThisPlayerDeckWidget.cpp \
+    InstanceGUIPart/GameTable/BattleArea/BattleAreaWidget.cpp \
+    InstanceGUIPart/GameTable/BattlePair/BattlePairWidget.cpp \
+    InstanceGUIPart/GameTable/Card/Card.cpp \
+    InstanceGUIPart/GameTable/GameTableWidget.cpp \
+    InstanceGUIPart/GameTable/HandUp/HandUpWidget.cpp \
+    InstanceGUIPart/GameTable/OtherPlayerDeck/OtherPlayerDeckWidget.cpp \
+    InstanceGUIPart/GameTable/SharedParentForPlayersDeck/SharedParentForPlayersDeck.cpp \
+    InstanceGUIPart/GameTable/StartDeck/StartDeckWidget.cpp \
+    InstanceGUIPart/GameTable/ThisPlayerDeck/ThisPlayerDeckWidget.cpp \
     main.cpp
 
 HEADERS += \
-    Card/Card.h \
-    Card/SharedOptions.h \
+    ApplicationGUIPart/MainApplicationWindow/ApplicationWindow.h \
+    ApplicationGUIPart/MainApplicationWindow/DefaultWindow/DefaultWindow.h \
+    ApplicationGUIPart/MainApplicationWindow/OptionsWindow/OptionsWindow.h \
+    ApplicationGUIPart/MainApplicationWindow/PaymentWindow/PaymentWindow.h \
+    ApplicationGUIPart/MainApplicationWindow/RegistrationWindow/RegistrationWindow.h \
     ConnectWithServerPart/ApplicationEthernetController.h \
-    GUIpart/BattleArea/BattleAreaWidget.h \
-    GUIpart/BattlePair/BattlePairWidget.h \
-    GUIpart/GameTable/GameTableWidget.h \
-    GUIpart/HandUp/HandUpWidget.h \
-    GUIpart/OtherPlayerDeck/OtherPlayerDeckWidget.h \
-    GUIpart/SharedParentForPlayersDeck/SharedParentForPlayersDeck.h \
-    GUIpart/StartDeck/StartDeckWidget.h \
-    GUIpart/ThisPlayerDeck/ThisPlayerDeckWidget.h
+    InstanceGUIPart/GameTable/BattleArea/BattleAreaWidget.h \
+    InstanceGUIPart/GameTable/BattlePair/BattlePairWidget.h \
+    InstanceGUIPart/GameTable/Card/Card.h \
+    InstanceGUIPart/GameTable/Card/SharedOptions.h \
+    InstanceGUIPart/GameTable/GameTableWidget.h \
+    InstanceGUIPart/GameTable/HandUp/HandUpWidget.h \
+    InstanceGUIPart/GameTable/OtherPlayerDeck/OtherPlayerDeckWidget.h \
+    InstanceGUIPart/GameTable/SharedParentForPlayersDeck/SharedParentForPlayersDeck.h \
+    InstanceGUIPart/GameTable/StartDeck/StartDeckWidget.h \
+    InstanceGUIPart/GameTable/ThisPlayerDeck/ThisPlayerDeckWidget.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES +=
