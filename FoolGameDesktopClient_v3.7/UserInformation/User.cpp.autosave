@@ -1,0 +1,16 @@
+#include "User.h"
+
+User::User(const QString& name, UserID id)
+    :m_userName{ name },
+     m_userID{ id }
+    {
+    }
+
+const QString& User::userName() const
+{
+    return m_userName;
+}
+UserID User::userID() const
+{
+    return m_userID;
+}
